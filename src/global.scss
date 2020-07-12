@@ -24,3 +24,57 @@
 @import "~@ionic/angular/css/text-alignment.css";
 @import "~@ionic/angular/css/text-transformation.css";
 @import "~@ionic/angular/css/flex-utils.css";
+
+.no-padding{
+    padding: 0;
+}
+
+.no-margin{
+    margin: 0;
+}
+
+.color-primary{
+    color: black;
+}
+
+.color-blank{
+    color: white;
+}
+
+.text-small{
+    font-size: 4vw;
+}
+
+.text-xsmall{
+    font-size: 3.4vw;
+}
+
+.text-xxsmall{
+    font-size: 3vw;
+}
+
+.text-xxxsmall{
+    font-size: 2.5vw;
+}
+
+.center{
+    text-align: center;
+}
+
+.text-left{
+    text-align: left;
+}
+
+.text-right{
+    text-align: right;
+}
+
+.text-bold{
+    font-weight: 700;
+}
+
+.box-shadow{
+    -webkit-box-shadow: 5px 22px 53px -4px rgba(0,0,0,0.4);
+    -moz-box-shadow: 5px 22px 53px -4px rgba(0,0,0,0.4);
+    box-shadow: 5px 22px 53px -4px rgba(0,0,0,0.4);
+}

@@ -1,13 +1,27 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>login</ion-title>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content>
+<ion-content class="ionContent">
 
-  <h1>
-    Login
-  </h1>
+  <div class="divPrimary center">
+    <h1 class="h1Title color-primary text-bold">Login</h1>
+    <img class="imgLogo" src="assets/icon/favicon.png" alt="image logo"/>
+
+    <input class="inputLogin marginTopImg box-shadow" [(ngModel)]="userText" type="telefono" placeholder="Email/ Numero de telefono"/>
+    <input class="inputLogin margintopInput box-shadow" [(ngModel)]="passwordText" type="password" placeholder="Contraseña"/>
+
+    <ion-grid class="ionGrid">
+      <ion-row>
+        <ion-col size="10">
+          <h4 class="h4Remember text-left">Recordar sesion</h4>
+        </ion-col>
+        <ion-col size=2>
+          <ion-checkbox class="chbox" [(ngModel)]="isRemember"></ion-checkbox>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    
+
+    <button class="btnLogin color-blank text-bold box-shadow" (click)="login()">Iniciar Sesion</button>
+
+  </div>
 
 </ion-content>
