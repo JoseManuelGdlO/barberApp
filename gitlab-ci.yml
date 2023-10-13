@@ -1,0 +1,101 @@
+variables:
+  SAST_EXCLUDED_ANALYZERS: "kubesec,nodejs-scan,dotenv,n8n-nodes-puppeteer-extended,chrome-cookies-secure"
+  
+stages:
+  - analyze
+  - build
+  - deploy
+  - clean
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME ==  "dev"
+      variables:
+        ENVIRONMENT_NAME: development
+
+    # - if: $CI_COMMIT_REF_NAME == "master" 
+    #   variables:
+    #     ENVIRONMENT_NAME: production
+    - when: always 
+
+# include:
+#   - template: "Security/SAST.gitlab-ci.yml"
+#   - template: "Security/Secret-Detection.gitlab-ci.yml"
+
+analyze:sonar:
+    stage: analyze
+    image:
+        name: sonarsource/sonar-scanner-cli:4.7
+        entrypoint: [""]
+    variables:
+        # Defines the location of the analysis task cache
+        SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+        # Shallow cloning needs to be disabled.
+        # See https://docs.sonarqube.org/latest/analysis/gitlab-cicd/.
+        GIT_DEPTH: 0
+    script:
+        - echo "----------------------------------------------------------------SONAR"
+        - echo "sonar.projectKey=$SONAR_PROJECT_KEY" >> sonar-project.properties
+        - echo "sonar.projectVersion=$CI_COMMIT_REF_NAME|$GITLAB_USER_LOGIN|$CI_JOB_ID" >> sonar-project.properties
+        - echo "sonar.analysis.revision=$CI_PIPELINE_ID" >> sonar-project.properties
+        - echo "sonar.analysis.branch=$CI_COMMIT_REF_NAME" >> sonar-project.properties
+        - echo "sonar.analysis.buildid=$CI_JOB_ID-$CI_PIPELINE_ID" >> sonar-project.properties
+        - echo "sonar.host.url=$SONAR_HOST" >> sonar-project.properties
+        - echo "Execute Sonar"
+        - sonar-scanner -X -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN -Dsonar.password=$SONAR_PASSWORD
+
+build:
+  stage: build
+  image: public.ecr.aws/o4d7w9i5/docker:20-dind
+  environment: 
+    name: $ENVIRONMENT_NAME
+  only:
+    - dev
+    - master
+  script: |
+    #build the image
+    docker build -t $AWS_ECR_REPO:latest .
+
+    #tag the image
+    docker tag $AWS_ECR_REPO:latest $AWS_ECR_URL/$AWS_ECR_REPO:latest
+    docker tag $AWS_ECR_REPO:latest $AWS_ECR_URL/$AWS_ECR_REPO:$CI_COMMIT_SHORT_SHA
+
+# deploy:
+#   stage: deploy
+#   image: public.ecr.aws/o4d7w9i5/docker:20-dind
+#   environment: 
+#     name: $ENVIRONMENT_NAME
+#   only:
+#     - dev
+#     - master
+#   script: |
+#     #docker login
+#     aws ecr get-login-password --region us-east-1 | \
+#     docker login --username AWS --password-stdin $AWS_ECR_URL
+
+#     #docker push
+#     docker push $AWS_ECR_URL/$AWS_ECR_REPO:$CI_COMMIT_SHORT_SHA
+#     docker push $AWS_ECR_URL/$AWS_ECR_REPO:latest
+
+#     #get task def
+#     aws ecs describe-task-definition --task-definition "$TASK_DEFINITION_NAME" --region "${AWS_DEFAULT_REGION}" | jq '.taskDefinition' > taskdef.json
+
+#     #remove task def attrs
+#     jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' taskdef.json | sponge taskdef.json
+
+#     #new docker image tag
+#     jq --arg IMAGE "$AWS_ECR_URL/$AWS_ECR_REPO:$CI_COMMIT_SHORT_SHA" '.containerDefinitions[0].image = $IMAGE' taskdef.json | sponge taskdef.json
+    
+#     #taskdef.json content
+#     cat taskdef.json
+    
+#     #register new task def
+#     aws ecs register-task-definition --region "${AWS_DEFAULT_REGION}" --cli-input-json file://taskdef.json
+    
+#     #update service with new task def
+#     aws ecs update-service --region "${AWS_DEFAULT_REGION}" --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}"  --task-definition "${TASK_DEFINITION_NAME}"
+
+#     #wait for stable service
+#     aws ecs wait services-stable --cluster "${CLUSTER_NAME}" --services "${SERVICE_NAME}"
+    
+# clean:
